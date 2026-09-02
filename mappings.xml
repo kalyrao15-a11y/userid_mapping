@@ -1,0 +1,10 @@
+<uid-message>
+  <version>1.0</version>
+  <type>update</type>
+  <payload>
+    <login>
+      <entry name="lab\jsmith" ip="10.1.1.10" timeout="60"/>
+      <entry name="lab\jdoe" ip="10.1.1.11" timeout="0"/>
+    </login>
+  </payload>
+</uid-message>
