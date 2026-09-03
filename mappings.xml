@@ -3,8 +3,8 @@
   <type>update</type>
   <payload>
     <login>
-      <entry name="lab\jsmith" ip="10.1.1.10" timeout="60"/>
-      <entry name="lab\jdoe" ip="10.1.1.11" timeout="0"/>
+      <entry name="nevco\libreadmin" ip="172.31.107.250" timeout="60"/>
+      <entry name="nevco\WUG-admin" ip="172.31.107.77" timeout="60"/>
     </login>
   </payload>
 </uid-message>
