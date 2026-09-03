@@ -101,18 +101,27 @@ python push_user_mapping.py --file path\to\mappings.xml
 .\push_user_mapping.ps1 -File path\to\mappings.xml
 ```
 
-Clear User-IP mappings created by the XML API only. This sends `<logout><all/></logout>` and does not remove mappings learned from User-ID agents, syslog, or other sources:
+Clear all User-IP mappings created by the XML API only. Does not remove mappings learned from User-ID agents, syslog, or other sources:
 
 ```powershell
 python push_user_mapping.py --clear
 .\push_user_mapping.ps1 -Clear
 ```
 
-Preview that clear payload:
+Clear the XML API mapping for a single IP address:
+
+```powershell
+python push_user_mapping.py --clear-ip 192.0.2.10
+.\push_user_mapping.ps1 -ClearIp 192.0.2.10
+```
+
+Preview any payload before sending:
 
 ```powershell
 python push_user_mapping.py --clear --dry-run
+python push_user_mapping.py --clear-ip 192.0.2.10 --dry-run
 .\push_user_mapping.ps1 -Clear -DryRun
+.\push_user_mapping.ps1 -ClearIp 192.0.2.10 -DryRun
 ```
 
-A successful push prints `Firewall accepted the User-ID mapping.`, the login/logout entries that were sent, and the API response. A successful clear prints `Firewall cleared XML API User-ID mappings.` plus `logout  all XML API entries`.
+A successful push prints `Firewall accepted the User-ID mapping.`, the login/logout entries that were sent, and the API response.

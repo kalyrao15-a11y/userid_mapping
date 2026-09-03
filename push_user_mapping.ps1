@@ -12,12 +12,14 @@
     .\push_user_mapping.ps1 -DryRun
     .\push_user_mapping.ps1 -File mappings.xml
     .\push_user_mapping.ps1 -Clear
+    .\push_user_mapping.ps1 -ClearIp 192.0.2.10
 #>
 [CmdletBinding()]
 param(
     [string]$File,
     [switch]$DryRun,
-    [switch]$Clear
+    [switch]$Clear,
+    [string]$ClearIp
 )
 
 $ErrorActionPreference = "Stop"
@@ -130,6 +132,10 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 }
 
+if ($Clear -and $ClearIp) {
+    throw "-Clear and -ClearIp are mutually exclusive."
+}
+
 if ($Clear) {
     $uidXml = @"
 <uid-message>
@@ -138,6 +144,18 @@ if ($Clear) {
   <payload>
     <logout>
       <all/>
+    </logout>
+  </payload>
+</uid-message>
+"@.Trim()
+} elseif ($ClearIp) {
+    $uidXml = @"
+<uid-message>
+  <version>1.0</version>
+  <type>update</type>
+  <payload>
+    <logout>
+      <entry ip="$ClearIp"/>
     </logout>
   </payload>
 </uid-message>
@@ -162,8 +180,11 @@ Import-DotEnv -Path (Join-Path $ScriptDir ".env")
 $config = Get-PanConfig
 
 if ($Clear) {
-    Write-Host "Clearing XML API User-ID mappings on $($config.Hostname) ($($config.Vsys))..."
-    $accepted = "Firewall cleared XML API User-ID mappings."
+    Write-Host "Clearing all XML API User-ID mappings on $($config.Hostname) ($($config.Vsys))..."
+    $accepted = "Firewall cleared all XML API User-ID mappings."
+} elseif ($ClearIp) {
+    Write-Host "Clearing XML API User-ID mapping for $ClearIp on $($config.Hostname) ($($config.Vsys))..."
+    $accepted = "Firewall cleared XML API User-ID mapping for $ClearIp."
 } else {
     Write-Host "Pushing User-ID mapping from $(Split-Path $File -Leaf) to $($config.Hostname) ($($config.Vsys))..."
     $accepted = "Firewall accepted the User-ID mapping."

@@ -9,6 +9,7 @@ Usage:
     python push_user_mapping.py --dry-run
     python push_user_mapping.py --file mappings.xml
     python push_user_mapping.py --clear
+    python push_user_mapping.py --clear-ip 192.0.2.10
 """
 
 from __future__ import annotations
@@ -138,11 +139,34 @@ def main() -> None:
     parser.add_argument(
         "--clear",
         action="store_true",
-        help="Remove User-IP mappings created via the XML API only (logout all)",
+        help="Remove all User-IP mappings created via the XML API (logout all)",
+    )
+    parser.add_argument(
+        "--clear-ip",
+        metavar="IP",
+        help="Remove the XML API mapping for a specific IP address",
     )
     args = parser.parse_args()
 
-    uid_xml = CLEAR_XMLAPI_UID_MESSAGE if args.clear else load_uid_message(args.file)
+    if args.clear and args.clear_ip:
+        raise SystemExit("--clear and --clear-ip are mutually exclusive.")
+
+    if args.clear:
+        uid_xml = CLEAR_XMLAPI_UID_MESSAGE
+    elif args.clear_ip:
+        uid_xml = (
+            "<uid-message>\n"
+            "  <version>1.0</version>\n"
+            "  <type>update</type>\n"
+            "  <payload>\n"
+            "    <logout>\n"
+            f'      <entry ip="{args.clear_ip}"/>\n'
+            "    </logout>\n"
+            "  </payload>\n"
+            "</uid-message>"
+        )
+    else:
+        uid_xml = load_uid_message(args.file)
 
     if args.dry_run:
         print(uid_xml)
@@ -150,8 +174,11 @@ def main() -> None:
 
     config = load_config()
     if args.clear:
-        print(f"Clearing XML API User-ID mappings on {config['hostname']} ({config['vsys']})...")
-        accepted = "Firewall cleared XML API User-ID mappings."
+        print(f"Clearing all XML API User-ID mappings on {config['hostname']} ({config['vsys']})...")
+        accepted = "Firewall cleared all XML API User-ID mappings."
+    elif args.clear_ip:
+        print(f"Clearing XML API User-ID mapping for {args.clear_ip} on {config['hostname']} ({config['vsys']})...")
+        accepted = f"Firewall cleared XML API User-ID mapping for {args.clear_ip}."
     else:
         print(f"Pushing User-ID mapping from {args.file.name} to {config['hostname']} ({config['vsys']})...")
         accepted = "Firewall accepted the User-ID mapping."
