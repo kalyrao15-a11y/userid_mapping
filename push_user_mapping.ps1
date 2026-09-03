@@ -70,6 +70,48 @@ function Get-PanConfig {
     }
 }
 
+function Format-Mappings {
+    param([string]$UidXml)
+
+    $doc = [xml]$UidXml
+    $payload = $doc.'uid-message'.payload
+    if (-not $payload) {
+        return @()
+    }
+
+    $lines = @()
+    foreach ($action in @("login", "logout")) {
+        $section = $payload.$action
+        if (-not $section) {
+            continue
+        }
+        if ($section.all) {
+            $lines += "  $action  all XML API entries"
+            continue
+        }
+        foreach ($entry in @($section.entry)) {
+            $name = if ($entry.name) { $entry.name } else { "(no user)" }
+            $ip = [string]$entry.ip
+            $extra = if ($entry.timeout) { "  timeout=$($entry.timeout)" } else { "" }
+            $lines += "  $action  $name  $ip$extra"
+        }
+    }
+    return $lines
+}
+
+function Write-Mappings {
+    param([string]$UidXml)
+
+    $lines = Format-Mappings -UidXml $UidXml
+    if (-not $lines) {
+        return
+    }
+    Write-Host "Mappings:"
+    foreach ($line in $lines) {
+        Write-Host $line
+    }
+}
+
 function Disable-UntrustedSsl {
     if (-not ("TrustAllCertsPolicy" -as [type])) {
         Add-Type @"
@@ -151,4 +193,5 @@ if ($text -notmatch 'status="success"' -and $text -notmatch "status='success'") 
 }
 
 Write-Host $accepted
+Write-Mappings -UidXml $uidXml
 Write-Output $text

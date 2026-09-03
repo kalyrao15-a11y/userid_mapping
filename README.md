@@ -115,4 +115,4 @@ python push_user_mapping.py --clear --dry-run
 .\push_user_mapping.ps1 -Clear -DryRun
 ```
 
-A successful push prints `Firewall accepted the User-ID mapping.` plus the API response. A successful clear prints `Firewall cleared XML API User-ID mappings.`
+A successful push prints `Firewall accepted the User-ID mapping.`, the login/logout entries that were sent, and the API response. A successful clear prints `Firewall cleared XML API User-ID mappings.` plus `logout  all XML API entries`.

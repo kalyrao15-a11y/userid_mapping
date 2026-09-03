@@ -17,6 +17,7 @@ import argparse
 import os
 import sys
 from pathlib import Path
+from xml.etree import ElementTree as ET
 
 import requests
 import urllib3
@@ -72,6 +73,38 @@ def load_uid_message(path: Path) -> str:
     return uid_xml
 
 
+def format_mappings(uid_xml: str) -> list[str]:
+    root = ET.fromstring(uid_xml)
+    payload = root.find("payload")
+    if payload is None:
+        return []
+
+    lines: list[str] = []
+    for action in ("login", "logout"):
+        section = payload.find(action)
+        if section is None:
+            continue
+        if section.find("all") is not None:
+            lines.append(f"  {action}  all XML API entries")
+            continue
+        for entry in section.findall("entry"):
+            name = entry.get("name") or "(no user)"
+            ip = entry.get("ip") or ""
+            timeout = entry.get("timeout")
+            extra = f"  timeout={timeout}" if timeout is not None else ""
+            lines.append(f"  {action}  {name}  {ip}{extra}")
+    return lines
+
+
+def print_mappings(uid_xml: str) -> None:
+    lines = format_mappings(uid_xml)
+    if not lines:
+        return
+    print("Mappings:")
+    for line in lines:
+        print(line)
+
+
 def push_mapping(config: dict, uid_xml: str) -> str:
     url = f"https://{config['hostname']}/api/"
     data = {
@@ -124,6 +157,7 @@ def main() -> None:
         accepted = "Firewall accepted the User-ID mapping."
     result = push_mapping(config, uid_xml)
     print(accepted)
+    print_mappings(uid_xml)
     print(result)
 
 
