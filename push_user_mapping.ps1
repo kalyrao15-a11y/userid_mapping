@@ -5,16 +5,19 @@
 .DESCRIPTION
     Reads PAN_HOSTNAME and PAN_API_KEY from .env, then POSTs mappings.xml as
     type=user-id. No commit is required; the mapping is applied immediately.
+    Use -Clear to remove mappings created via the XML API only.
 
 .EXAMPLE
     .\push_user_mapping.ps1
     .\push_user_mapping.ps1 -DryRun
     .\push_user_mapping.ps1 -File mappings.xml
+    .\push_user_mapping.ps1 -Clear
 #>
 [CmdletBinding()]
 param(
     [string]$File,
-    [switch]$DryRun
+    [switch]$DryRun,
+    [switch]$Clear
 )
 
 $ErrorActionPreference = "Stop"
@@ -85,13 +88,27 @@ public class TrustAllCertsPolicy : ICertificatePolicy {
     [System.Net.ServicePointManager]::SecurityProtocol = [System.Net.SecurityProtocolType]::Tls12
 }
 
-if (-not (Test-Path -LiteralPath $File)) {
-    throw "Mappings file not found: $File"
-}
+if ($Clear) {
+    $uidXml = @"
+<uid-message>
+  <version>1.0</version>
+  <type>update</type>
+  <payload>
+    <logout>
+      <all/>
+    </logout>
+  </payload>
+</uid-message>
+"@.Trim()
+} else {
+    if (-not (Test-Path -LiteralPath $File)) {
+        throw "Mappings file not found: $File"
+    }
 
-$uidXml = (Get-Content -LiteralPath $File -Raw).Trim()
-if ($uidXml -notmatch "<uid-message" -or ($uidXml -notmatch "<login" -and $uidXml -notmatch "<logout")) {
-    throw "$File must contain a uid-message with login and/or logout entries."
+    $uidXml = (Get-Content -LiteralPath $File -Raw).Trim()
+    if ($uidXml -notmatch "<uid-message" -or ($uidXml -notmatch "<login" -and $uidXml -notmatch "<logout")) {
+        throw "$File must contain a uid-message with login and/or logout entries."
+    }
 }
 
 if ($DryRun) {
@@ -102,7 +119,13 @@ if ($DryRun) {
 Import-DotEnv -Path (Join-Path $ScriptDir ".env")
 $config = Get-PanConfig
 
-Write-Host "Pushing User-ID mapping from $(Split-Path $File -Leaf) to $($config.Hostname) ($($config.Vsys))..."
+if ($Clear) {
+    Write-Host "Clearing XML API User-ID mappings on $($config.Hostname) ($($config.Vsys))..."
+    $accepted = "Firewall cleared XML API User-ID mappings."
+} else {
+    Write-Host "Pushing User-ID mapping from $(Split-Path $File -Leaf) to $($config.Hostname) ($($config.Vsys))..."
+    $accepted = "Firewall accepted the User-ID mapping."
+}
 
 if (-not $config.VerifySsl) {
     Disable-UntrustedSsl
@@ -127,5 +150,5 @@ if ($text -notmatch 'status="success"' -and $text -notmatch "status='success'") 
     throw "XML API rejected the mapping:`n$text"
 }
 
-Write-Host "Firewall accepted the User-ID mapping."
+Write-Host $accepted
 Write-Output $text

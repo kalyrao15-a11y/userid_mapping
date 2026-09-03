@@ -8,6 +8,7 @@ Usage:
     python push_user_mapping.py
     python push_user_mapping.py --dry-run
     python push_user_mapping.py --file mappings.xml
+    python push_user_mapping.py --clear
 """
 
 from __future__ import annotations
@@ -23,6 +24,15 @@ from dotenv import load_dotenv
 
 ROOT = Path(__file__).resolve().parent
 DEFAULT_MAPPINGS = ROOT / "mappings.xml"
+CLEAR_XMLAPI_UID_MESSAGE = """<uid-message>
+  <version>1.0</version>
+  <type>update</type>
+  <payload>
+    <logout>
+      <all/>
+    </logout>
+  </payload>
+</uid-message>"""
 
 
 def load_config() -> dict:
@@ -92,18 +102,28 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="Push static User-IP mappings to a PAN NGFW via XML API.")
     parser.add_argument("--file", type=Path, default=DEFAULT_MAPPINGS, help="Path to mappings.xml")
     parser.add_argument("--dry-run", action="store_true", help="Print the uid-message XML and do not send it")
+    parser.add_argument(
+        "--clear",
+        action="store_true",
+        help="Remove User-IP mappings created via the XML API only (logout all)",
+    )
     args = parser.parse_args()
 
-    uid_xml = load_uid_message(args.file)
+    uid_xml = CLEAR_XMLAPI_UID_MESSAGE if args.clear else load_uid_message(args.file)
 
     if args.dry_run:
         print(uid_xml)
         return
 
     config = load_config()
-    print(f"Pushing User-ID mapping from {args.file.name} to {config['hostname']} ({config['vsys']})...")
+    if args.clear:
+        print(f"Clearing XML API User-ID mappings on {config['hostname']} ({config['vsys']})...")
+        accepted = "Firewall cleared XML API User-ID mappings."
+    else:
+        print(f"Pushing User-ID mapping from {args.file.name} to {config['hostname']} ({config['vsys']})...")
+        accepted = "Firewall accepted the User-ID mapping."
     result = push_mapping(config, uid_xml)
-    print("Firewall accepted the User-ID mapping.")
+    print(accepted)
     print(result)
 
 
