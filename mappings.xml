@@ -3,8 +3,16 @@
   <type>update</type>
   <payload>
     <login>
-      <entry name="nevco\libreadmin" ip="172.31.107.250" timeout="60"/>
-      <entry name="nevco\WUG-admin" ip="172.31.107.77" timeout="60"/>
+      <entry name="nevco\libreadmin" ip="172.31.107.250" timeout="0"/>
+      <entry name="nevco\WUG-admin" ip="172.31.107.77" timeout="0"/>
+      <entry name="nevco\Rubrik100" ip="172.31.120.100" timeout="0"/>
+      <entry name="nevco\Rubrik101" ip="172.31.120.101" timeout="0"/>
+      <entry name="nevco\Rubrik103" ip="172.31.120.103" timeout="0"/>
+      <entry name="nevco\RoomMateGMWUM2" ip="172.27.36.138" timeout="0"/>
+      <entry name="nevco\pdc-pa3430-fw1" ip="172.31.112.1" timeout="0"/>
+      <entry name="nevco\Mitel-Admin" ip="10.27.0.6" timeout="0"/>
+      <entry name="nevco\Panorama-Admin" ip="172.27.2.173" timeout="0"/>
+      <entry name="nevco\VMS-NVR-ER" ip="10.121.18.10" timeout="0"/>
     </login>
   </payload>
 </uid-message>
